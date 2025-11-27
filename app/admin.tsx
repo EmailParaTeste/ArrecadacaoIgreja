@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, TextInput, Modal, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { subscribeToContributions, confirmContribution, addManualContribution, resetAllContributions } from '../src/services/contributionService';
+import { subscribeToContributions, confirmContribution, addManualContribution, resetAllContributions, rejectContribution } from '../src/services/contributionService';
 import { getCurrentUser, signOut, createAdmin, getAllAdmins, updateAdmin, deleteAdmin } from '../src/services/authService';
-import { subscribeToConfig, updateChallengeSize } from '../src/services/configService';
-import { Contribution, Admin } from '../src/types';
+import { subscribeToConfig, updateChallengeSize, updateDepositConfig } from '../src/services/configService';
+import { sendPushNotification } from '../src/services/notificationService';
+import { Contribution, Admin, DepositConfig } from '../src/types';
 
 export default function AdminScreen() {
   const router = useRouter();
@@ -28,6 +29,27 @@ export default function AdminScreen() {
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [editAdminName, setEditAdminName] = useState('');
 
+  // Deposit Config State
+  const [depositConfig, setDepositConfig] = useState<DepositConfig>({
+    bankName: '',
+    accountName: '',
+    accountNumber: '',
+    nib: '',
+    contact: ''
+  });
+  const [newDepositConfig, setNewDepositConfig] = useState<DepositConfig>({
+    bankName: '',
+    accountName: '',
+    accountNumber: '',
+    nib: '',
+    contact: ''
+  });
+
+  // Notification State
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifBody, setNotifBody] = useState('');
+  const [sendingNotif, setSendingNotif] = useState(false);
+
   useEffect(() => {
     // Check if user is logged in
     const user = getCurrentUser();
@@ -49,6 +71,10 @@ export default function AdminScreen() {
     const unsubscribeConfig = subscribeToConfig((config) => {
       setChallengeSize(config.challengeSize);
       setNewChallengeSize(config.challengeSize.toString());
+      if (config.deposit) {
+        setDepositConfig(config.deposit);
+        setNewDepositConfig(config.deposit);
+      }
     });
     
     // Load admins
@@ -68,6 +94,16 @@ export default function AdminScreen() {
       console.error('Error loading admins:', error);
     }
   };
+
+  // Dashboard Calculations
+  const totalPotentialValue = (challengeSize * (challengeSize + 1)) / 2;
+  const totalCollected = contributions
+    .filter(c => c.status === 'confirmed')
+    .reduce((sum, c) => sum + c.number, 0);
+  const totalPending = contributions
+    .filter(c => c.status === 'pending')
+    .reduce((sum, c) => sum + c.number, 0);
+  const progressPercentage = totalPotentialValue > 0 ? (totalCollected / totalPotentialValue) * 100 : 0;
 
   const handleLogout = async () => {
     Alert.alert(
@@ -99,6 +135,28 @@ export default function AdminScreen() {
               await confirmContribution(id);
             } catch (error) {
               Alert.alert('Erro', 'Falha ao confirmar.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleReject = async (id: string, number: number, name: string) => {
+    Alert.alert(
+      'Rejeitar Pedido',
+      `Rejeitar pedido do número ${number} de ${name}? O número ficará disponível novamente.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Rejeitar', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await rejectContribution(id);
+              Alert.alert('Sucesso', 'Pedido rejeitado e número liberado.');
+            } catch (error) {
+              Alert.alert('Erro', 'Falha ao rejeitar.');
             }
           }
         }
@@ -190,6 +248,39 @@ export default function AdminScreen() {
       Alert.alert('Erro', error.message || 'Falha ao atualizar tamanho.');
     }
   };
+
+  const handleUpdateDepositConfig = async () => {
+    try {
+      await updateDepositConfig(newDepositConfig);
+      Alert.alert('Sucesso', 'Dados de depósito atualizados.');
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Falha ao atualizar dados de depósito.');
+    }
+  };
+
+  const handleSendNotification = async () => {
+    if (!notifTitle || !notifBody) {
+      Alert.alert('Erro', 'Preencha título e mensagem.');
+      return;
+    }
+    
+    setSendingNotif(true);
+    try {
+      const result = await sendPushNotification(notifTitle, notifBody);
+      Alert.alert('Sucesso', `Notificação enviada para ${result.count} dispositivos.`);
+      setNotifTitle('');
+      setNotifBody('');
+    } catch (error) {
+      Alert.alert('Erro', 'Falha ao enviar notificação.');
+    } finally {
+      setSendingNotif(false);
+    }
+  };
+
+  const handleQuickNotify = (title: string, body: string) => {
+    setNotifTitle(title);
+    setNotifBody(body);
+  };
   
   const handleEditAdmin = (admin: Admin) => {
     setEditingAdmin(admin);
@@ -253,12 +344,20 @@ export default function AdminScreen() {
       </View>
       
       {item.status === 'pending' && (
-        <TouchableOpacity 
-          style={styles.confirmButton}
-          onPress={() => handleConfirm(item.id, item.number, item.nome_usuario)}
-        >
-          <Text style={styles.confirmButtonText}>Confirmar</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity 
+            style={styles.confirmButton}
+            onPress={() => handleConfirm(item.id, item.number, item.nome_usuario)}
+          >
+            <Text style={styles.confirmButtonText}>Confirmar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.rejectButton}
+            onPress={() => handleReject(item.id, item.number, item.nome_usuario)}
+          >
+            <Text style={styles.rejectButtonText}>Rejeitar</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -279,6 +378,38 @@ export default function AdminScreen() {
         >
           <Text style={styles.headerButtonText}>Sair</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Financial Dashboard */}
+      <View style={styles.dashboardSection}>
+        <Text style={styles.sectionTitle}>📊 Dashboard Financeiro</Text>
+        
+        <View style={styles.cardsContainer}>
+          <View style={[styles.card, styles.cardGreen]}>
+            <Text style={styles.cardLabel}>Arrecadado</Text>
+            <Text style={styles.cardValue}>{totalCollected.toLocaleString()} MZN</Text>
+          </View>
+          
+          <View style={[styles.card, styles.cardYellow]}>
+            <Text style={styles.cardLabel}>Pendente</Text>
+            <Text style={styles.cardValue}>{totalPending.toLocaleString()} MZN</Text>
+          </View>
+          
+          <View style={[styles.card, styles.cardBlue]}>
+            <Text style={styles.cardLabel}>Meta Total</Text>
+            <Text style={styles.cardValue}>{totalPotentialValue.toLocaleString()} MZN</Text>
+          </View>
+        </View>
+
+        <View style={styles.progressContainer}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>Progresso da Meta</Text>
+            <Text style={styles.progressPercent}>{progressPercentage.toFixed(1)}%</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
+          </View>
+        </View>
       </View>
 
       {/* Challenge Size Configuration */}
@@ -310,6 +441,121 @@ export default function AdminScreen() {
           onPress={handleResetContributions}
         >
           <Text style={styles.resetButtonText}>🗑️ Resetar Todas as Contribuições</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Deposit Configuration */}
+      <View style={styles.configSection}>
+        <Text style={styles.sectionTitle}>🏦 Dados de Depósito</Text>
+        
+        <View style={styles.configItem}>
+          <Text style={styles.configLabel}>Banco:</Text>
+          <TextInput
+            style={styles.configInput}
+            value={newDepositConfig.bankName}
+            onChangeText={(text) => setNewDepositConfig({...newDepositConfig, bankName: text})}
+          />
+        </View>
+
+        <View style={styles.configItem}>
+          <Text style={styles.configLabel}>Nome da Conta:</Text>
+          <TextInput
+            style={styles.configInput}
+            value={newDepositConfig.accountName}
+            onChangeText={(text) => setNewDepositConfig({...newDepositConfig, accountName: text})}
+          />
+        </View>
+
+        <View style={styles.configItem}>
+          <Text style={styles.configLabel}>Número da Conta:</Text>
+          <TextInput
+            style={styles.configInput}
+            value={newDepositConfig.accountNumber}
+            onChangeText={(text) => setNewDepositConfig({...newDepositConfig, accountNumber: text})}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.configItem}>
+          <Text style={styles.configLabel}>NIB:</Text>
+          <TextInput
+            style={styles.configInput}
+            value={newDepositConfig.nib}
+            onChangeText={(text) => setNewDepositConfig({...newDepositConfig, nib: text})}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.configItem}>
+          <Text style={styles.configLabel}>Contacto:</Text>
+          <TextInput
+            style={styles.configInput}
+            value={newDepositConfig.contact}
+            onChangeText={(text) => setNewDepositConfig({...newDepositConfig, contact: text})}
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        <TouchableOpacity 
+          style={styles.updateButton}
+          onPress={handleUpdateDepositConfig}
+        >
+          <Text style={styles.updateButtonText}>Salvar Dados de Depósito</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Notification Section */}
+      <View style={styles.configSection}>
+        <Text style={styles.sectionTitle}>📢 Enviar Notificação</Text>
+        
+        <View style={styles.configItem}>
+          <Text style={styles.configLabel}>Título:</Text>
+          <TextInput
+            style={styles.configInput}
+            value={notifTitle}
+            onChangeText={setNotifTitle}
+            placeholder="Ex: Atualização do Desafio"
+          />
+        </View>
+
+        <View style={styles.configItem}>
+          <Text style={styles.configLabel}>Mensagem:</Text>
+          <TextInput
+            style={[styles.configInput, { height: 80, textAlignVertical: 'top' }]}
+            value={notifBody}
+            onChangeText={setNotifBody}
+            placeholder="Digite a mensagem aqui..."
+            multiline
+          />
+        </View>
+
+        <View style={styles.quickNotifyContainer}>
+          <TouchableOpacity 
+            style={styles.quickNotifyButton}
+            onPress={() => handleQuickNotify('🚀 Estamos na metade!', 'Já atingimos 50% da nossa meta! Continue participando.')}
+          >
+            <Text style={styles.quickNotifyText}>50%</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.quickNotifyButton}
+            onPress={() => handleQuickNotify('🏁 Reta Final!', 'Faltam poucos números para completarmos o desafio!')}
+          >
+            <Text style={styles.quickNotifyText}>Reta Final</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.quickNotifyButton}
+            onPress={() => handleQuickNotify('🎉 Desafio Concluído!', 'Obrigado a todos! Completamos o desafio com sucesso.')}
+          >
+            <Text style={styles.quickNotifyText}>Concluído</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.updateButton, sendingNotif && styles.disabledButton]}
+          onPress={handleSendNotification}
+          disabled={sendingNotif}
+        >
+          <Text style={styles.updateButtonText}>{sendingNotif ? 'Enviando...' : 'Enviar Notificação'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -589,6 +835,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  rejectButton: {
+    backgroundColor: '#F44336',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  rejectButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   addButton: {
     backgroundColor: '#2196F3',
     padding: 15,
@@ -689,6 +949,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
   },
   updateButtonText: {
     color: '#fff',
@@ -704,13 +968,12 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 10,
   },
   resetButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
   },
-  // Admin management styles
   adminSection: {
     backgroundColor: '#fff',
     margin: 10,
@@ -722,10 +985,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 5,
-    marginBottom: 8,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
   adminInfo: {
     flex: 1,
@@ -738,36 +1000,121 @@ const styles = StyleSheet.create({
   adminEmail: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
   },
   adminActions: {
     flexDirection: 'row',
     gap: 10,
   },
   editButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    padding: 8,
+    backgroundColor: '#FFC107',
     borderRadius: 5,
   },
   editButtonText: {
-    fontSize: 18,
+    fontSize: 16,
   },
   deleteButton: {
+    padding: 8,
     backgroundColor: '#F44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
     borderRadius: 5,
   },
   deleteButtonText: {
-    fontSize: 18,
+    fontSize: 16,
   },
-  // Contributions section
   contributionsSection: {
+    marginBottom: 20,
+  },
+  // Dashboard Styles
+  dashboardSection: {
     backgroundColor: '#fff',
     margin: 10,
     padding: 15,
     borderRadius: 8,
     elevation: 2,
+  },
+  cardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 10,
+  },
+  card: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 1,
+  },
+  cardGreen: {
+    backgroundColor: '#E8F5E9',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  cardYellow: {
+    backgroundColor: '#FFF8E1',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFC107',
+  },
+  cardBlue: {
+    backgroundColor: '#E3F2FD',
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+  },
+  cardLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 5,
+    fontWeight: '600',
+  },
+  cardValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  progressContainer: {
+    marginTop: 5,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  progressLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  progressPercent: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2196F3',
+  },
+  progressBarBg: {
+    height: 12,
+    backgroundColor: '#eee',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#2196F3',
+    borderRadius: 6,
+  },
+  quickNotifyContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 15,
+  },
+  quickNotifyButton: {
+    backgroundColor: '#E3F2FD',
+    padding: 8,
+    borderRadius: 5,
+    flex: 1,
+    alignItems: 'center',
+  },
+  quickNotifyText: {
+    color: '#2196F3',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
 });

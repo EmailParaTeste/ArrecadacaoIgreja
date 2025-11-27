@@ -7,15 +7,18 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { Admin } from '../types';
 
 const ADMINS_COLLECTION = 'admins';
+
+import { getErrorMessage } from '../utils/error';
 
 export const signIn = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return userCredential.user;
   } catch (error: any) {
-    throw new Error(error.message);
+    throw new Error(getErrorMessage(error));
   }
 };
 
@@ -30,12 +33,13 @@ export const createAdmin = async (email: string, password: string, nome: string)
     // Store admin info in Firestore
     await setDoc(doc(db, ADMINS_COLLECTION, email), {
       email,
-      nome
+      nome,
+      role: 'admin'
     });
     
     return userCredential.user;
   } catch (error: any) {
-    throw new Error(error.message);
+    throw new Error(getErrorMessage(error));
   }
 };
 
@@ -47,14 +51,14 @@ export const subscribeToAuthChanges = (callback: (user: User | null) => void) =>
   return onAuthStateChanged(auth, callback);
 };
 
-export const getAllAdmins = async () => {
+export const getAllAdmins = async (): Promise<Admin[]> => {
   const adminsCollection = collection(db, ADMINS_COLLECTION);
   const snapshot = await getDocs(adminsCollection);
   
   return snapshot.docs.map(doc => ({
     email: doc.id,
     ...doc.data()
-  }));
+  } as Admin));
 };
 
 export const updateAdmin = async (email: string, updates: { nome?: string; email?: string }) => {

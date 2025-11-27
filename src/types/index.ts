@@ -9,11 +9,21 @@ export interface Contribution {
   timestamp?: any;
 }
 
+export interface DepositConfig {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  nib: string;
+  contact: string;
+}
+
 export interface AppConfig {
   challengeSize: number;
+  deposit?: DepositConfig;
 }
 
 export interface Admin {
   email: string;
   nome: string;
+  role?: string;
 }

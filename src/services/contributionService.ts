@@ -60,3 +60,7 @@ export const resetAllContributions = async () => {
   const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
   await Promise.all(deletePromises);
 };
+
+export const rejectContribution = async (id: string) => {
+  await deleteDoc(doc(db, CONTRIBUTIONS_COLLECTION, id));
+};

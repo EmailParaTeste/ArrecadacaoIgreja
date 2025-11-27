@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { signIn } from '../src/services/authService';
+import { COLORS } from '../src/constants/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function LoginScreen() {
       await signIn(email, password);
       router.replace('/admin');
     } catch (error: any) {
-      Alert.alert('Erro', 'Email ou senha incorretos.');
+      Alert.alert('Erro', error.message);
     } finally {
       setLoading(false);
     }
@@ -33,6 +34,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor={COLORS.textSecondary}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -42,6 +44,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Senha"
+        placeholderTextColor={COLORS.textSecondary}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -53,7 +56,7 @@ export default function LoginScreen() {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={COLORS.background} />
         ) : (
           <Text style={styles.buttonText}>Entrar</Text>
         )}
@@ -71,39 +74,42 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
+    color: COLORS.primary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: COLORS.secondary,
     borderRadius: 8,
     padding: 15,
     fontSize: 16,
     marginBottom: 15,
+    color: COLORS.text,
+    backgroundColor: COLORS.inputBackground,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.primary,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
   buttonDisabled: {
-    backgroundColor: '#A5D6A7',
+    opacity: 0.7,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.background,
     fontSize: 18,
     fontWeight: 'bold',
   },
   backText: {
-    color: '#2196F3',
+    color: COLORS.secondary,
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,

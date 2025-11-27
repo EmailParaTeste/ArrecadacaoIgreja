@@ -1,20 +1,65 @@
+import React from 'react';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 export default function App() {
+  usePushNotifications();
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#1a1a1a',
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          contentStyle: {
+            backgroundColor: '#121212',
+          },
+        }}
+      >
+        <Stack.Screen 
+          name="index" 
+          options={{ 
+            title: 'I.M.I.F',
+            headerShown: false 
+          }} 
+        />
+        <Stack.Screen 
+          name="grid" 
+          options={{ 
+            title: 'Escolha um Número',
+            headerBackTitle: 'Voltar'
+          }} 
+        />
+        <Stack.Screen 
+          name="confirm" 
+          options={{ 
+            title: 'Confirmar Reserva',
+            headerBackTitle: 'Voltar'
+          }} 
+        />
+        <Stack.Screen 
+          name="login" 
+          options={{ 
+            title: 'Admin Login',
+            headerBackTitle: 'Voltar'
+          }} 
+        />
+        <Stack.Screen 
+          name="admin" 
+          options={{ 
+            title: 'Painel Admin',
+            headerBackVisible: false,
+            gestureEnabled: false
+          }} 
+        />
+      </Stack>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

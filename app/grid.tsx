@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { subscribeToContributions } from '../src/services/contributionService';
 import { subscribeToConfig } from '../src/services/configService';
 import { Contribution } from '../src/types';
+import { COLORS } from '../src/constants/theme';
 
 export default function GridScreen() {
   const router = useRouter();
@@ -43,16 +44,24 @@ export default function GridScreen() {
 
   const renderItem = ({ item }: { item: number }) => {
     const status = getNumberStatus(item);
-    let backgroundColor = '#4CAF50'; // Available - Green
-    if (status === 'pending') backgroundColor = '#FFC107'; // Pending - Yellow
-    if (status === 'confirmed') backgroundColor = '#F44336'; // Confirmed - Red
+    let backgroundColor = COLORS.available; // Available
+    let textColor = COLORS.text;
+
+    if (status === 'pending') {
+      backgroundColor = COLORS.pending;
+      textColor = COLORS.background; // Dark text on Gold
+    }
+    if (status === 'confirmed') {
+      backgroundColor = COLORS.confirmed;
+      textColor = COLORS.text;
+    }
 
     return (
       <TouchableOpacity
         style={[styles.gridItem, { backgroundColor }]}
         onPress={() => handleNumberPress(item)}
       >
-        <Text style={styles.gridText}>{item}</Text>
+        <Text style={[styles.gridText, { color: textColor }]}>{item}</Text>
       </TouchableOpacity>
     );
   };
@@ -82,16 +91,16 @@ export default function GridScreen() {
       
       <View style={styles.legendContainer}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#4CAF50' }]} />
-          <Text>Disponível</Text>
+          <View style={[styles.legendColor, { backgroundColor: COLORS.available }]} />
+          <Text style={styles.legendText}>Disponível</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#FFC107' }]} />
-          <Text>Pendente</Text>
+          <View style={[styles.legendColor, { backgroundColor: COLORS.pending }]} />
+          <Text style={styles.legendText}>Pendente</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#F44336' }]} />
-          <Text>Confirmado</Text>
+          <View style={[styles.legendColor, { backgroundColor: COLORS.confirmed }]} />
+          <Text style={styles.legendText}>Confirmado</Text>
         </View>
       </View>
     </View>
@@ -102,7 +111,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
   progressContainer: {
     marginBottom: 20,
@@ -112,17 +121,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: COLORS.primary,
   },
   progressBarBackground: {
     width: '100%',
     height: 20,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 10,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.secondary,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.primary,
   },
   gridContainer: {
     paddingBottom: 20,
@@ -136,7 +148,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   gridText: {
-    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -145,7 +156,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: COLORS.cardBackground,
   },
   legendItem: {
     flexDirection: 'row',
@@ -156,5 +167,8 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 5,
     marginRight: 5,
+  },
+  legendText: {
+    color: COLORS.text,
   },
 });

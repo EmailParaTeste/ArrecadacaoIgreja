@@ -1,11 +1,18 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Link } from 'expo-router';
+import { COLORS } from '../src/constants/theme';
 
 export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Desafio dos 100 Depósitos</Text>
-      <Text style={styles.subtitle}>Ajude nossa igreja a alcançar o objetivo!</Text>
+      <Image 
+        source={require('../assets/LogoIgreja.png')} 
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <Text style={styles.title}>I.M.I.F</Text>
+      <Text style={styles.subtitle}>Desafio dos Depósitos</Text>
+      <Text style={styles.description}>Juntos podemos conquistar um propósito maior!</Text>
       
       <Link href="/grid" asChild>
         <TouchableOpacity style={styles.button}>
@@ -28,36 +35,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 5,
     textAlign: 'center',
-    color: '#333',
+    color: COLORS.primary,
   },
   subtitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 10,
+    textAlign: 'center',
+    color: COLORS.text,
+  },
+  description: {
     fontSize: 16,
     marginBottom: 40,
     textAlign: 'center',
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.primary,
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 25,
     marginBottom: 20,
     width: '100%',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
   },
   adminButton: {
-    backgroundColor: '#757575',
-    marginTop: 20,
+    backgroundColor: 'transparent',
+    borderColor: COLORS.secondary,
+    marginTop: 10,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.background,
     fontSize: 18,
     fontWeight: 'bold',
   },

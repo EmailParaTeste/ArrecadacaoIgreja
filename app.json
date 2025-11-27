@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "ArrecadacaoIgreja",
-    "slug": "ArrecadacaoIgreja",
+    "name": "I.M.I.F",
+    "slug": "imif-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/LogoIgreja.png",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/LogoIgreja.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,18 +16,25 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.igreja.imif",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/LogoIgreja.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/LogoIgreja.png"
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5017efba-133a-4e15-b31d-567a3fd40479"
+      }
+    }
   }
 }

@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { reserveNumber } from '../src/services/contributionService';
+import { subscribeToConfig } from '../src/services/configService';
+import { getErrorMessage } from '../src/utils/error';
+import { DepositConfig } from '../src/types';
+import { COLORS } from '../src/constants/theme';
 
 export default function ConfirmScreen() {
   const { number } = useLocalSearchParams();
@@ -9,6 +13,16 @@ export default function ConfirmScreen() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [depositConfig, setDepositConfig] = useState<DepositConfig | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToConfig((config) => {
+      if (config.deposit) {
+        setDepositConfig(config.deposit);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleConfirm = async () => {
     if (!name.trim() || !phone.trim()) {
@@ -24,7 +38,7 @@ export default function ConfirmScreen() {
       ]);
     } catch (error) {
       console.error(error);
-      Alert.alert('Erro', 'Não foi possível reservar o número. Tente novamente.');
+      Alert.alert('Erro', getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -39,19 +53,19 @@ export default function ConfirmScreen() {
         <Text style={styles.accountInfoTitle}>📋 Dados para Depósito</Text>
         <View style={styles.accountInfoBox}>
           <Text style={styles.accountLabel}>Banco:</Text>
-          <Text style={styles.accountValue}>BAI - Banco Angolano de Investimentos</Text>
-          
-          <Text style={styles.accountLabel}>Titular:</Text>
-          <Text style={styles.accountValue}>Igreja Evangélica</Text>
+          <Text style={styles.accountValue}>{depositConfig?.bankName || 'Carregando...'}</Text>
+        
+          <Text style={styles.accountLabel}>Nome da Conta:</Text>
+          <Text style={styles.accountValue}>{depositConfig?.accountName || 'Carregando...'}</Text>
           
           <Text style={styles.accountLabel}>Número da Conta:</Text>
-          <Text style={styles.accountValue}>0040 0000 0000 0000 0000</Text>
+          <Text style={styles.accountValue}>{depositConfig?.accountNumber || 'Carregando...'}</Text>
           
-          <Text style={styles.accountLabel}>IBAN:</Text>
-          <Text style={styles.accountValue}>AO06 0040 0000 0000 0000 0000 0000 0</Text>
+          <Text style={styles.accountLabel}>NIB:</Text>
+          <Text style={styles.accountValue}>{depositConfig?.nib || 'Carregando...'}</Text>
           
           <Text style={styles.accountLabel}>Valor a Depositar:</Text>
-          <Text style={styles.accountValueHighlight}>{number}.000,00 MZn</Text>
+          <Text style={styles.accountValueHighlight}>{number} MZN</Text>
         </View>
       </View>
 
@@ -60,6 +74,7 @@ export default function ConfirmScreen() {
       <TextInput
         style={styles.input}
         placeholder="Seu Nome"
+        placeholderTextColor={COLORS.textSecondary}
         value={name}
         onChangeText={setName}
         autoFocus
@@ -68,6 +83,7 @@ export default function ConfirmScreen() {
       <TextInput
         style={styles.input}
         placeholder="Seu WhatsApp/Telefone"
+        placeholderTextColor={COLORS.textSecondary}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
@@ -79,7 +95,7 @@ export default function ConfirmScreen() {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={COLORS.background} />
         ) : (
           <Text style={styles.buttonText}>Confirmar Reserva</Text>
         )}
@@ -92,20 +108,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#666',
+    color: COLORS.primary,
   },
   accountInfoContainer: {
     marginBottom: 20,
@@ -114,58 +124,60 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#2196F3',
+    color: COLORS.secondary,
   },
   accountInfoBox: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: COLORS.cardBackground,
     padding: 15,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORS.secondary,
   },
   accountLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginTop: 8,
   },
   accountValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.text,
     marginBottom: 5,
   },
   accountValueHighlight: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: COLORS.primary,
     marginTop: 5,
   },
   formTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333',
+    color: COLORS.text,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: COLORS.secondary,
     borderRadius: 8,
     padding: 15,
     fontSize: 18,
     marginBottom: 15,
+    color: COLORS.text,
+    backgroundColor: COLORS.inputBackground,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.primary,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
   buttonDisabled: {
-    backgroundColor: '#A5D6A7',
+    opacity: 0.7,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.background,
     fontSize: 18,
     fontWeight: 'bold',
   },

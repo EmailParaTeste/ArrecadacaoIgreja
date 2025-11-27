@@ -5,12 +5,19 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { AppConfig } from '../types';
+import { AppConfig, DepositConfig } from '../types';
 
 const CONFIG_DOC = 'config/app';
 
 const DEFAULT_CONFIG: AppConfig = {
-  challengeSize: 100
+  challengeSize: 100,
+  deposit: {
+    bankName: 'BCI - Banco Comercial De Moçambique',
+    accountName: 'Igreja',
+    accountNumber: '0040 0000 0000 0000 0000',
+    nib: '0040 0000 0000 0000 0000',
+    contact: '840000000'
+  }
 };
 
 export const getConfig = async (): Promise<AppConfig> => {
@@ -24,7 +31,7 @@ export const getConfig = async (): Promise<AppConfig> => {
     try {
       await setDoc(docRef, DEFAULT_CONFIG);
     } catch (error) {
-      console.log('Error initializing config (likely permission denied), using default');
+      console.log('Erro ao inicializar configuração (provavelmente permissão negada), usando padrão');
     }
     return DEFAULT_CONFIG;
   }
@@ -32,11 +39,16 @@ export const getConfig = async (): Promise<AppConfig> => {
 
 export const updateChallengeSize = async (size: number): Promise<void> => {
   if (size < 50 || size > 300) {
-    throw new Error('Challenge size must be between 50 and 300');
+    throw new Error('O tamanho do desafio deve estar entre 50 e 300');
   }
   
   const docRef = doc(db, 'config', 'app');
   await setDoc(docRef, { challengeSize: size }, { merge: true });
+};
+
+export const updateDepositConfig = async (deposit: DepositConfig): Promise<void> => {
+  const docRef = doc(db, 'config', 'app');
+  await setDoc(docRef, { deposit }, { merge: true });
 };
 
 export const subscribeToConfig = (callback: (config: AppConfig) => void) => {
@@ -51,13 +63,13 @@ export const subscribeToConfig = (callback: (config: AppConfig) => void) => {
         await setDoc(docRef, DEFAULT_CONFIG);
         callback(DEFAULT_CONFIG);
       } catch (error) {
-        console.log('Error initializing config (likely permission denied), using default:', error);
+        console.log('Erro ao inicializar configuração (provavelmente permissão negada), usando padrão:', error);
         callback(DEFAULT_CONFIG);
       }
     }
   }, (error) => {
-    console.error('Error subscribing to config:', error);
-    // If we can't read config, use default
+    console.error('Erro ao assinar configuração:', error);
+    // Se não conseguirmos ler a configuração, usamos o padrão
     callback(DEFAULT_CONFIG);
   });
 };
