@@ -2,25 +2,33 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { subscribeToContributions } from '../src/services/contributionService';
+import { subscribeToConfig } from '../src/services/configService';
 import { Contribution } from '../src/types';
-
-const TOTAL_NUMBERS = 100; // Default, can be made dynamic later
 
 export default function GridScreen() {
   const router = useRouter();
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loading, setLoading] = useState(true);
+  const [challengeSize, setChallengeSize] = useState(100);
 
   useEffect(() => {
-    const unsubscribe = subscribeToContributions((data) => {
+    const unsubscribeContributions = subscribeToContributions((data) => {
       setContributions(data);
       setLoading(false);
     });
-    return () => unsubscribe();
+    
+    const unsubscribeConfig = subscribeToConfig((config) => {
+      setChallengeSize(config.challengeSize);
+    });
+    
+    return () => {
+      unsubscribeContributions();
+      unsubscribeConfig();
+    };
   }, []);
 
   const getNumberStatus = (num: number) => {
-    const contribution = contributions.find(c => c.number === num);
+    const contribution = contributions.find((c: Contribution) => c.number === num);
     return contribution ? contribution.status : 'available';
   };
 
@@ -49,16 +57,16 @@ export default function GridScreen() {
     );
   };
 
-  const numbers = Array.from({ length: TOTAL_NUMBERS }, (_, i) => i + 1);
+  const numbers = Array.from({ length: challengeSize }, (_, i) => i + 1);
 
   // Calculate progress
-  const confirmedCount = contributions.filter(c => c.status === 'confirmed').length;
-  const progress = confirmedCount / TOTAL_NUMBERS;
+  const confirmedCount = contributions.filter((c: Contribution) => c.status === 'confirmed').length;
+  const progress = confirmedCount / challengeSize;
 
   return (
     <View style={styles.container}>
       <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>Progresso: {confirmedCount}/{TOTAL_NUMBERS}</Text>
+        <Text style={styles.progressText}>Progresso: {confirmedCount}/{challengeSize}</Text>
         <View style={styles.progressBarBackground}>
           <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
         </View>
@@ -67,7 +75,7 @@ export default function GridScreen() {
       <FlatList
         data={numbers}
         renderItem={renderItem}
-        keyExtractor={(item) => item.toString()}
+        keyExtractor={(item: number) => item.toString()}
         numColumns={5}
         contentContainerStyle={styles.gridContainer}
       />

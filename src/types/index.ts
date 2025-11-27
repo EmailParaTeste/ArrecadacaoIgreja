@@ -10,7 +10,7 @@ export interface Contribution {
 }
 
 export interface AppConfig {
-  maxNumbers: number;
+  challengeSize: number;
 }
 
 export interface Admin {

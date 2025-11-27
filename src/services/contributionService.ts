@@ -5,7 +5,9 @@ import {
   updateDoc, 
   onSnapshot, 
   query, 
-  serverTimestamp
+  serverTimestamp,
+  getDocs,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Contribution, ContributionStatus } from '../types';
@@ -49,4 +51,12 @@ export const addManualContribution = async (number: number, nome_usuario: string
     timestamp: serverTimestamp(),
   };
   await setDoc(doc(db, CONTRIBUTIONS_COLLECTION, number.toString()), contribution);
+};
+
+export const resetAllContributions = async () => {
+  const q = query(collection(db, CONTRIBUTIONS_COLLECTION));
+  const snapshot = await getDocs(q);
+  
+  const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+  await Promise.all(deletePromises);
 };

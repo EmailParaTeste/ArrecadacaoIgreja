@@ -1,21 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Contributions collection
-    // - Anyone can read (to see the grid)
-    // - Only authenticated users (admins) can write
     match /contributions/{contributionId} {
       allow read: if true;
-      // Allow create only if status is 'pending' OR if user is admin (auth != null)
-      allow create: if (request.resource.data.status == 'pending') || (request.auth != null);
-      allow update, delete: if request.auth != null; // Only admins can update/delete
+      allow create: if request.resource.data.status == 'pending' || request.auth != null;
+      allow update, delete: if request.auth != null;
     }
-    
+
     // Admins collection
-    // - Only authenticated users can read/write
     match /admins/{adminId} {
       allow read, write: if request.auth != null;
+    }
+
+    // Config collection
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
