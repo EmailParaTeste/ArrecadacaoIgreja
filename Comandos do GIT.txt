@@ -1,0 +1,37 @@
+Proxima grande ATUALIZAÇÃO :
+
+ .Remover sistema de vidas
+🔹 Rotina Git para atualizar o projeto no GitHub
+# 1️⃣ Entrar na pasta do projeto
+cd C:\Users\Mussapinga\Documents\Igreja\ArrecadacaoIgreja
+
+# 2️⃣ Adicionar todas as alterações
+git add .
+
+# 3️⃣ Criar um commit com mensagem descritiva
+git commit -m "Descreva aqui a atualização que fez"
+
+# 4️⃣ Enviar para o GitHub
+git push
+
+💡 Dicas extras
+
+Mensagem do commit
+
+Seja claro e breve, ex:
+
+git commit -m "Corrige bugs na tela de confirmação"
+git commit -m "Adiciona validação de número duplicado"
+
+
+Verificar status antes de enviar
+
+git status
+
+
+Mostra quais arquivos foram alterados, adicionados ou removidos.
+
+Atualizar branch remoto antes de enviar (se outras pessoas estiverem trabalhando)
+
+git pull
+git push
