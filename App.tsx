@@ -2,12 +2,13 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 export default function App() {
   usePushNotifications();
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -60,6 +61,6 @@ export default function App() {
           }} 
         />
       </Stack>
-    </>
+    </ErrorBoundary>
   );
 }

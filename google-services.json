@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "563183230426",
+    "project_id": "churchfundraisingapp",
+    "storage_bucket": "churchfundraisingapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563183230426:android:11e952d75736e73c89b4e3",
+        "android_client_info": {
+          "package_name": "com.igreja.imif"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQvoJIiJSJcvpHBvlMTFgwhLKq9uGOxQc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

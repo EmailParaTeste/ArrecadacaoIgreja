@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
 
       <Link href="/login" asChild>
         <TouchableOpacity style={[styles.button, styles.adminButton]}>
-          <Text style={styles.buttonText}>Área Admin</Text>
+          <Text style={styles.adminButtonText}>Área Admin</Text>
         </TouchableOpacity>
       </Link>
     </View>
@@ -74,12 +74,17 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   adminButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: COLORS.secondary,
     borderColor: COLORS.secondary,
     marginTop: 10,
   },
   buttonText: {
     color: COLORS.background,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  adminButtonText: {
+    color: COLORS.text,
     fontSize: 18,
     fontWeight: 'bold',
   },
